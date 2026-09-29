@@ -1,0 +1,30 @@
+[project]
+name = "azbuka-ssm"
+version = "0.1.0"
+description = "Telegram-бот, который напоминает менеджерам о постах, собирает материал и публикует в канал через Claude"
+requires-python = ">=3.12"
+dependencies = [
+    "aiogram>=3.13,<4",
+    "apscheduler>=3.10,<4",
+    "aiosqlite>=0.20",
+    "anthropic>=0.60",
+    "pydantic-settings>=2.4",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8",
+    "pytest-asyncio>=0.24",
+]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["app", "app.handlers", "app.services"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+testpaths = ["tests"]
