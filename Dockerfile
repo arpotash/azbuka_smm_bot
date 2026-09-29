@@ -1,4 +1,6 @@
-FROM python:3.12-slim
+# базовый образ можно подменить на зеркало: BASE_IMAGE=mirror.gcr.io/library/python:3.12-slim
+ARG BASE_IMAGE=python:3.12-slim
+FROM ${BASE_IMAGE}
 
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
