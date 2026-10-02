@@ -8,6 +8,7 @@ import logging
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 from aiogram.types import BotCommand
+from aiogram.client.session.aiohttp import AiohttpSession
 
 from app.config import Settings
 from app.db import Database
@@ -41,7 +42,8 @@ async def run() -> None:
     db = Database(settings.db_path)
     await db.connect()
 
-    bot = Bot(settings.bot_token, default=DefaultBotProperties(parse_mode=None))
+    session = AiohttpSession(proxy='http://tg-proxy.internal:3128', timeout=60)
+    bot = Bot(settings.bot_token, default=DefaultBotProperties(parse_mode=None), session=session)
     site = SiteApi(settings.site_api_url, settings.site_url)
     media = MediaStore(bot, settings.media_dir, fetch_url=site.get_bytes)
     llm = make_llm(settings, settings.load_system_prompt())
