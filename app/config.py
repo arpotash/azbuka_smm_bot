@@ -23,6 +23,8 @@ class Settings(BaseSettings):
     bot_token: str = Field(alias="BOT_TOKEN")
     channel_id: int = Field(alias="CHANNEL_ID")
     channel_username: str = Field(default="", alias="CHANNEL_USERNAME")
+    # прокси для api.telegram.org: http://user:pass@host:port или socks5://user:pass@host:port
+    telegram_proxy: str = Field(default="", alias="TELEGRAM_PROXY")
     manager_ids_raw: str = Field(alias="MANAGER_IDS")
     admin_ids_raw: str = Field(default="", alias="ADMIN_IDS")
 
@@ -48,6 +50,8 @@ class Settings(BaseSettings):
     llm_fake_reply_file: str = Field(default="", alias="LLM_FAKE_REPLY_FILE")
     anthropic_api_key: str = Field(default="", alias="ANTHROPIC_API_KEY")
     anthropic_base_url: str = Field(default="", alias="ANTHROPIC_BASE_URL")
+    # прокси для запросов к модели, тот же формат, что у TELEGRAM_PROXY
+    llm_proxy: str = Field(default="", alias="LLM_PROXY")
     anthropic_model: str = Field(default="claude-opus-5", alias="ANTHROPIC_MODEL")
     llm_effort: str = Field(default="", alias="LLM_EFFORT")
     llm_max_tokens: int = Field(default=8000, alias="LLM_MAX_TOKENS")

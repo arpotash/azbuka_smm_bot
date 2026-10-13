@@ -285,6 +285,10 @@ class AnthropicLlm(BaseLlm):
         }
         if settings.anthropic_base_url:
             kwargs["base_url"] = settings.anthropic_base_url
+        if settings.llm_proxy:
+            from anthropic import DefaultAsyncHttpxClient
+
+            kwargs["http_client"] = DefaultAsyncHttpxClient(proxy=settings.llm_proxy)
         self.client = AsyncAnthropic(**kwargs)
 
     async def _complete(self, system: list[dict], messages: list[dict]) -> Completion:

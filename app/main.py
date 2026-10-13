@@ -7,6 +7,7 @@ import logging
 
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
+from aiogram.client.session.aiohttp import AiohttpSession
 from aiogram.types import BotCommand
 
 from app.config import Settings
@@ -41,7 +42,8 @@ async def run() -> None:
     db = Database(settings.db_path)
     await db.connect()
 
-    bot = Bot(settings.bot_token, default=DefaultBotProperties(parse_mode=None))
+    session = AiohttpSession(proxy=settings.telegram_proxy) if settings.telegram_proxy else None
+    bot = Bot(settings.bot_token, session=session, default=DefaultBotProperties(parse_mode=None))
     site = SiteApi(settings.site_api_url, settings.site_url)
     media = MediaStore(bot, settings.media_dir, fetch_url=site.get_bytes)
     llm = make_llm(settings, settings.load_system_prompt())
@@ -65,9 +67,11 @@ async def run() -> None:
         me = await bot.get_me()
         plan = "; ".join(f"{e.day_code} {e.hour:02d}:{e.minute:02d} {e.theme}" for e in settings.schedule)
         log.info(
-            "Бот @%s запущен. Менеджеры: %s, модель: %s через %s, расписание: %s, RSS-лент: %d",
+            "Бот @%s запущен. Менеджеры: %s, модель: %s через %s, расписание: %s, RSS-лент: %d, "
+            "прокси Telegram: %s, прокси модели: %s",
             me.username, sorted(settings.manager_ids), settings.anthropic_model,
             settings.anthropic_base_url or "api.anthropic.com", plan, len(settings.news_feeds),
+            _proxy_host(settings.telegram_proxy), _proxy_host(settings.llm_proxy),
         )
 
     @dp.shutdown()
@@ -80,6 +84,14 @@ async def run() -> None:
         await dp.start_polling(bot, allowed_updates=["message", "callback_query"])
     finally:
         await bot.session.close()
+
+
+def _proxy_host(url: str) -> str:
+    """Адрес прокси для лога, без логина и пароля."""
+    if not url:
+        return "нет"
+    scheme, _, rest = url.partition("://")
+    return f"{scheme}://{rest.rpartition('@')[2]}"
 
 
 def main() -> None:
