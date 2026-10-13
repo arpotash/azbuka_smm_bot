@@ -335,7 +335,7 @@ class SlotService:
                 await self.db.messages.mark_processed(pending)
                 chat_id = slot.assigned_user_id
                 try:
-                    reply = await self._ask_model(slot)
+                    reply = await self._ask_model(slot, set(pending))
                 except LlmError as exc:
                     await self.db.messages.mark_processed(pending, False)
                     count = await self.db.slots.increment_llm_errors(slot_id)
@@ -368,7 +368,7 @@ class SlotService:
                     )
                     await self._show_preview(slot, reply.draft)
 
-    async def _ask_model(self, slot: Slot):
+    async def _ask_model(self, slot: Slot, new_ids: set[int]):
         chat_id = slot.assigned_user_id
         try:
             await self.bot.send_chat_action(chat_id, ChatAction.TYPING)
@@ -376,7 +376,7 @@ class SlotService:
             pass
         rows = await self.db.messages.list_for_slot(slot.id)
         has_photos = any(r.kind == MsgKind.PHOTO for r in rows)
-        messages = await build_messages(rows, self.media)
+        messages = await build_messages(rows, self.media, new_ids)
         last_posts = [p.plain_text for p in await self.db.posts.last(self.settings.last_posts_n)]
         today = datetime.now(self.settings.tz).date()
         return await self.llm.generate(

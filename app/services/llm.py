@@ -82,8 +82,17 @@ def parse_reply(raw: str) -> ParsedReply:
     return ParsedReply("question", text)
 
 
-async def build_messages(rows: list[SlotMessage], media: MediaStore) -> list[dict]:
-    """Собирает messages[] для API из переписки слота. Подряд идущие user-строки сливаются в один ход."""
+async def build_messages(
+    rows: list[SlotMessage], media: MediaStore, new_ids: set[int] | None = None
+) -> list[dict]:
+    """Собирает messages[] для API из переписки слота. Подряд идущие user-строки сливаются в один ход.
+
+    new_ids — сообщения, на которые модель ещё не отвечала. Они идут в конец: сообщение,
+    пришедшее, пока модель отвечала на предыдущее, лежит в БД раньше её ответа, и без
+    перестановки переписка закончилась бы репликой ассистента (prefill), которую модель отклоняет.
+    """
+    if new_ids:
+        rows = [r for r in rows if r.id not in new_ids] + [r for r in rows if r.id in new_ids]
     messages: list[dict] = []
     pending_user: list[SlotMessage] = []
 

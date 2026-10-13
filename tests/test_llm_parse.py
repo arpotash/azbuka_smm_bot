@@ -100,3 +100,28 @@ async def test_long_text_without_photos_within_4096_is_normal(settings):
 
 async def test_effort_not_sent_when_empty(settings):
     assert settings.llm_effort == ""
+
+
+async def test_message_sent_during_model_reply_goes_last():
+    """Сообщение, пришедшее пока модель отвечала, лежит в БД раньше ответа, но в переписке идёт после него."""
+    from app.models import MsgKind, Role, SlotMessage
+    from app.services.llm import build_messages
+
+    def row(id_, role, kind, text):
+        return SlotMessage(
+            id=id_, slot_id=1, role=role, kind=kind, user_id=1, tg_message_id=id_, media_group_id=None,
+            text=text, file_id=None, file_unique_id=None, processed=True, created_at="",
+        )
+
+    rows = [
+        row(1, Role.USER, MsgKind.TEXT, "первое"),
+        row(2, Role.USER, MsgKind.TEXT, "второе, пока модель думала"),
+        row(3, Role.ASSISTANT, MsgKind.QUESTION, "вопрос модели"),
+    ]
+    messages = await build_messages(rows, media=None, new_ids={2})
+    assert [m["role"] for m in messages] == ["user", "assistant", "user"]
+    assert messages[0]["content"][-1]["text"] == "первое"
+    assert messages[-1]["content"][-1]["text"] == "второе, пока модель думала"
+
+    # без new_ids поведение прежнее
+    assert (await build_messages(rows, media=None))[-1]["role"] == "assistant"
